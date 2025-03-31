@@ -150,6 +150,8 @@ class Connection
      */
     private $waitOnMinutelyRateLimitHit = false;
 
+    private $onHttpAction; // Added property for HTTP action logging
+
     /**
      * @return Client
      */
@@ -278,6 +280,10 @@ class Connection
         $this->waitIfMinutelyRateLimitHit();
         $url = $this->formatUrl($url, $this->requiresDivisionInRequestUrl($url), $url === $this->nextUrl);
 
+        if (is_callable($this->onHttpAction)) {
+            call_user_func($this->onHttpAction, 'GET', $url);
+        }
+
         try {
             $request = $this->createRequest('GET', $url, null, $params, $headers);
             $response = $this->client()->send($request);
@@ -300,6 +306,10 @@ class Connection
     {
         $this->waitIfMinutelyRateLimitHit();
         $url = $this->formatUrl($url);
+
+        if (is_callable($this->onHttpAction)) {
+            call_user_func($this->onHttpAction, 'POST', $url);
+        }
 
         try {
             $request = $this->createRequest('POST', $url, $body);
@@ -368,6 +378,10 @@ class Connection
         $this->waitIfMinutelyRateLimitHit();
         $url = $this->formatUrl($url);
 
+        if (is_callable($this->onHttpAction)) {
+            call_user_func($this->onHttpAction, 'PUT', $url);
+        }
+
         try {
             $request = $this->createRequest('PUT', $url, $body);
             $response = $this->client()->send($request);
@@ -389,6 +403,10 @@ class Connection
     {
         $this->waitIfMinutelyRateLimitHit();
         $url = $this->formatUrl($url);
+
+        if (is_callable($this->onHttpAction)) {
+            call_user_func($this->onHttpAction, 'DELETE', $url);
+        }
 
         try {
             $request = $this->createRequest('DELETE', $url);
@@ -783,6 +801,14 @@ class Connection
     public function setRefreshAccessTokenCallback($callback)
     {
         $this->refreshAccessTokenCallback = $callback;
+    }
+
+    /**
+     * @param callable $callback
+     */
+    public function setOnHttpAction($callback)
+    {
+        $this->onHttpAction = $callback;
     }
 
     /**
